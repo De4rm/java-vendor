@@ -6,20 +6,19 @@ import java.io.IOException;
 import javax.swing.*;
 
 
-//CLASS MENU CREATE APP INTERFACE
-public class Menu{
+public class Menu {
 	
 	static JFrame frame = new JFrame(); 
 	static JButton putMoneyBtn = new JButton("Run");
 	static JButton rechange = new JButton("Fill Back");
 	static JTextField moneyField = new JTextField(6);
 	static JLabel lblInfo = new JLabel("Enter Money:");
-	static FileManager fManager = new FileManager();
-	static Float moneyIn=(float) 0;
+	static FileManager fManager;
 	static int d = 0;
+	static Money money; 
 	
-	public static void make_interface(){
-		
+	Menu(){
+		fManager = new FileManager("/home/de4rm/Documents/Java/file.txt");
 		try {
 			fManager.read_file();
 		} catch (IOException e1) {
@@ -28,6 +27,13 @@ public class Menu{
 			return;
 		}
 		
+		money = new Money("/home/de4rm/Documents/Java/money.txt");
+	}
+	
+
+	public static void make_interface(){
+		
+				
 		frame.setTitle("Vendor Machine");
 
 		frame.setLayout(new BorderLayout());
@@ -70,37 +76,7 @@ public class Menu{
 		c.weighty = 0.1;
 		
 		
-		String coord = "024";
-		
-		for(int y=0; y<2; y++) {
-			for(int x=0; x<3; x++) {
-				c.gridx = Integer.valueOf(String.valueOf(coord.charAt(x)));
-				c.gridy = Integer.valueOf(String.valueOf(coord.charAt(y)));
-				
-				JButton vendingbtn = new JButton(fManager.datas[d].name);
-	
-				vendingbtn.addActionListener(new ActionListener() { 
-					  public void actionPerformed(ActionEvent e) {
-						  FieldsData row = findData(e);
-						  float price = row.price;
-						  if(price<moneyIn) {
-							  //JOptionPane.showMessageDialog(null, "thank you for using java");
-							  moneyIn -= price;
-							  row.quantity--;
-							  System.out.println(row.quantity);
-							  System.out.println(moneyIn);
-						  } else {
-							  System.out.println(row.quantity);
-						  }
-						  
-						  } 
-						} );
-				
-				resettingPanel.add(vendingbtn, c);
-				d++;
-				
-			}
-		}
+		addVendingButtons(c, resettingPanel);
 		
 		
 		
@@ -118,9 +94,15 @@ public class Menu{
 		
 		c.gridx = 4;
 		c.gridy = 4;
+		
 		putMoneyBtn.addActionListener(new ActionListener() { 
 			  public void actionPerformed(ActionEvent e) { 
-				  moneyIn = Float.valueOf(moneyField.getText());
+				  Float monedIn = Float.valueOf(moneyField.getText());
+				  if (money.CheckMoned(monedIn)) {
+					 money.insertMoney(monedIn);
+				  } else {
+					  JOptionPane.showMessageDialog(null, "No Moned with this value.");
+				  }
 				  } 
 				} );
 		resettingPanel.add(putMoneyBtn, c);
@@ -133,16 +115,48 @@ public class Menu{
 	}
 	
 	
-	private static FieldsData findData(ActionEvent e) {
-		
-		for(int i=0; i<fManager.datas.length; i++) {
-			if (fManager.datas[i].name == e.getActionCommand()) {
-				return fManager.datas[i];
-			}
-		}
-		
-		return null;
-		
+	private static Product findData(ActionEvent e) {
+		int index = Integer.parseInt(e.getActionCommand());
+				
+		return fManager.datas[index];		
 	}
 	
+	
+	private static void addVendingButtons(GridBagConstraints c, JPanel resettingPanel){
+		String coord = "024";
+		
+		for(int y=0; y<2; y++) {
+			for(int x=0; x<3; x++) {
+				c.gridx = Integer.valueOf(String.valueOf(coord.charAt(x)));
+				c.gridy = Integer.valueOf(String.valueOf(coord.charAt(y)));
+				
+				JButton vendBtn = new JButton(fManager.datas[d].name);
+				
+				vendBtn.setActionCommand(String.valueOf(d));
+				
+				vendBtn.addActionListener(new ActionListener() { 
+					  public void actionPerformed(ActionEvent e) {
+						  
+						  Product row = findData(e);
+						 //System.out.println(row.name);
+						  float price = row.price;
+						  if(price<money.moneyIn) {
+							 JOptionPane.showMessageDialog(null, "thank you for using java");
+							 money.moneyIn -= price;
+							 row.quantity--;
+							 JOptionPane.showMessageDialog(null, money.getMoneyOut());
+						  } else {
+							  JOptionPane.showMessageDialog(null, "Not enough money.");
+						  }
+						  
+						  } 
+						} );
+				
+				resettingPanel.add(vendBtn, c);
+				d++;
+				
+			}
+		}
+	}
+
 }
